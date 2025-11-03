@@ -441,27 +441,39 @@ class ActivityManagerCard extends LitElement {
         this.requestUpdate();
     }
 
-    _updateActivity() {
+    async _updateActivity() {
         if (this._currentItem == null) return;
 
-        let last_completed = this.shadowRoot.querySelector(
-            "#update-last-completed"
-        );
+        const lastCompletedEl = this.shadowRoot.querySelector("#update-last-completed");
 
-        this._hass.callWS({
-            type: "activity_manager/update",
-            item_id: this._currentItem["id"],
-            last_completed: last_completed.value,
-        });
+        try {
+            await this._hass.callWS({
+                type: "activity_manager/update",
+                item_id: this._currentItem.id,
+                last_completed: lastCompletedEl.value,
+            });
+        } finally {
+            const dlg = this.shadowRoot.querySelector(".confirm-update");
+            if (dlg) dlg.close();
+            this._currentItem = null;
+            await this._fetchData();
+        }
     }
 
-    _removeActivity() {
+    async _removeActivity() {
         if (this._currentItem == null) return;
 
-        this._hass.callWS({
-            type: "activity_manager/remove",
-            item_id: this._currentItem["id"],
-        });
+        try {
+            await this._hass.callWS({
+                type: "activity_manager/remove",
+                item_id: this._currentItem.id,
+            });
+        } finally {
+            const dlg = this.shadowRoot.querySelector(".confirm-remove");
+            if (dlg) dlg.close();
+            this._currentItem = null;
+            await this._fetchData();
+        }
     }
 
     static styles = css`
